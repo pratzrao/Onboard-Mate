@@ -1,6 +1,0 @@
-sources:
-- name: hackathon_pratiksha
-  schema: public
-  tables:
-  - name: trainer_details
-version: 2
