@@ -111,3 +111,12 @@ def run_dbt_project(target_dir: Path, dbt_venv: Path):
     logging.info(result)
 
     return {"result": result}
+
+
+def create_new_model(target_dir: Path, modelname: str, sqlcode: str):
+
+    modelfile = target_dir / "models" / modelname / ".sql"
+    if modelfile.exists():
+        modelfile.unlink()
+
+    modelfile.write_text(sqlcode, encoding="utf-8")
