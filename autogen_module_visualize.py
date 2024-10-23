@@ -34,15 +34,10 @@ def generate_charts(user_prompt):
         assistant,
         message=user_prompt,
         summary_method="reflection_with_llm",
-    )
+        silent=True
+    )    
 
-    # Extract and return the reply, chat history, and summary
-    reply = chat_res.chat_history[-1]['content'] if chat_res.chat_history else None
-    return {
-        "reply": reply,
-        "chat_history": chat_res.chat_history,
-        "summary": chat_res.summary,
-    }
+    return(chat_res)
 
 # Example usage:
 # if __name__ == "__main__":
