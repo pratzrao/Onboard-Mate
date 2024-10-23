@@ -53,6 +53,20 @@ def get_column_info(conn: psycopg2.extensions.connection, schema: str, table: st
         return []
 
 
+def get_data(conn: psycopg2.extensions.connection, schema: str, table: str):
+    """select all data from a table"""
+    try:
+        cur = conn.cursor()
+        cur.execute(f"SELECT * FROM {schema}.{table};")
+        data = cur.fetchall()
+        cur.close()
+        return data
+    except Exception as e:
+        conn.rollback()  # Rollback transaction in case of failure
+        st.error(f"Error fetching data: {str(e)}")
+        return []
+
+
 # Helper function to fetch distinct values
 def get_distinct_values(
     conn: psycopg2.extensions.connection, schema: str, table: str, column: str
@@ -124,7 +138,7 @@ def schema_table_page():
 
                 st.session_state["selected_schema"] = schema  # New key
                 st.session_state["selected_table"] = table  # New key
-                st.session_state["columns_sample"] = columns_info  # New key
+                st.session_state["columns_info"] = columns_info  # New key
 
                 st.session_state["current_page"] = "visualize"
                 st.rerun()
