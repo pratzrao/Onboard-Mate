@@ -40,7 +40,6 @@ class ChartCreator:
             summary_method="reflection_with_llm",
         )
 
-        # Extract and return the reply, chat history, and summary
         if chat_res.chat_history:
             (*_, last) = chat_res.chat_history
             reply = last['content']
