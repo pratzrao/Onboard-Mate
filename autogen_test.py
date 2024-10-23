@@ -1,9 +1,9 @@
 import autogen
 import os
 from autogen.coding import LocalCommandLineCodeExecutor
-from autogen import Agent, AssistantAgent, ConversableAgent, UserProxyAgent
+#from autogen import Agent, AssistantAgent, ConversableAgent, UserProxyAgent
 
-config_list = [{"model": "gpt-4o", "api_key": os.getenv("OPENAI_API_KEY")}]
+config_list = [{"model": "gpt-4o-mini", "api_key": os.getenv("OPENAI_API_KEY")}]
 
 # create an AssistantAgent named "assistant"
 assistant = autogen.AssistantAgent(
@@ -29,7 +29,7 @@ user_proxy = autogen.UserProxyAgent(
 # the assistant receives a message from the user_proxy, which contains the task description
 chat_res = user_proxy.initiate_chat(
     assistant,
-    message="""What date is today? Compare the year-to-date gain for META and TESLA.""",
+    message="""I have a table with columns - name, age, date, gender, id, timestamp. Write dbt code for me. I need to drop the column timestamp, and drop all rows with null values in date.""",
     summary_method="reflection_with_llm",
 )
 
@@ -38,3 +38,4 @@ print("Chat history:", chat_res.chat_history)
 print("Summary:", chat_res.summary)
 
 print("Cost info:", chat_res.cost)
+
