@@ -25,7 +25,7 @@ class ChartCreator:
         # Create a UserProxyAgent instance
         self.user_proxy = autogen.UserProxyAgent(
             name="user_proxy",
-            human_input_mode='ALWAYS',
+            human_input_mode='NEVER',
             max_consecutive_auto_reply=10,
             is_termination_msg=is_termination_msg,
             code_execution_config={
