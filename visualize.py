@@ -40,5 +40,5 @@ def visualize_page():
 
     message = st.text_area('What would you like to see from your data?')
     if st.button("Submit"):
-        st.session_state["current_page"] = "table_selection"
-        st.rerun()
+        response = generate_charts(message)
+        st.write(f'{message}\n{response}')
