@@ -170,6 +170,10 @@ def run_dbt_project():
         logging.error(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}")
         logging.error(f"Command output:\n{e.output.decode('utf-8')}")
         raise
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}")
+        logging.error(f"Full command output:\n{e.output.decode('utf-8')}")
+        raise
 
 
 def create_new_model(modelname: str, sqlcode: str):
