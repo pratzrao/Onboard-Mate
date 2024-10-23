@@ -22,14 +22,6 @@ def connection_page():
     # Load environment variables from .env file (if available)
     load_dotenv(dotenv_path="details.env")
 
-    # Debug: print environment variables to ensure they are being loaded
-    print("Loaded environment variables:")
-    print("DBHOST:", os.getenv("DBHOST"))
-    print("DBPORT:", os.getenv("DBPORT"))
-    print("DBNAME:", os.getenv("DBNAME"))
-    print("DBUSER:", os.getenv("DBUSER"))
-    print("DBPASSWORD:", os.getenv("DBPASSWORD"))
-
     # Set default values from environment variables or keep them empty
     env_host = os.getenv("DBHOST", "")
     env_port = os.getenv("DBPORT", "5432")

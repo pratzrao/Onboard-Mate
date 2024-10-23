@@ -112,6 +112,11 @@ def schema_table_page():
 
             # Navigation options after table selection
             if st.button("Transform Data"):
+
+                st.session_state["selected_schema"] = schema  # New key
+                st.session_state["selected_table"] = table  # New key
+                st.session_state["columns_sample"] = columns_info  # New key
+
                 st.session_state["current_page"] = "transform"
                 st.rerun()
 
@@ -119,7 +124,7 @@ def schema_table_page():
 
                 st.session_state["selected_schema"] = schema  # New key
                 st.session_state["selected_table"] = table  # New key
-                st.session_state["columns_info"] = columns_info  # New key
+                st.session_state["columns_sample"] = columns_info  # New key
 
                 st.session_state["current_page"] = "visualize"
                 st.rerun()
