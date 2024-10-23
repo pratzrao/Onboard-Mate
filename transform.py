@@ -50,16 +50,13 @@ def transform_page():
             st.error("The new table name cannot be the same as the existing table.")
         else:
             # Combine metadata with the user prompt
-            full_prompt = (
-                f"I need you to write code for a dbt model based on table details and user information that you'll find below. "
-                f"We are using a Postgres database. Make sure the model is accurate and will execute with no changes necessary. "
-                f"Return only the dbt code. NOTHING ELSE. Don't say anything. Don't acknowledge my question, say yes or sure—just give me the code.\n"
-                f"Table Metadata:\n{metadata}\n\nTransformation Instructions:\n{user_prompt}\n\nNew Table: {new_table_name}"
-            )
+            
 
             # Call autogen to generate DBT code
-            result = generate_dbt_code(full_prompt)
-            if result:
+            result = generate_dbt_code(user_prompt, metadata, new_table_name)
+            if result == "Error":
+                st.error("Your request does not seem like a legitimate transformation request. Please rephrase and try again.")
+            elif result:
                 # Create dbt directory if it doesn't exist
                 os.makedirs("dbt", exist_ok=True)
 
