@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import openai
@@ -11,6 +12,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def visualize_page():
     schema = st.session_state.get("selected_schema")
     table = st.session_state.get("selected_table")
+
+    # Ensure "dashboard" is initialized before use
+    if "dashboard" not in st.session_state:
+        st.session_state["dashboard"] = []  # Initialize an empty list if not present
 
     if schema and table:
         st.header(f"Visualizing Data from {schema}.{table}")
@@ -45,7 +50,13 @@ def visualize_page():
                         order = "Ascending"
 
                     # Step 3: Generate and render the chart based on the interpreted parameters
-                    create_chart(chart_params, columns_df, sort_by, order)
+                    chart = create_chart(chart_params, columns_df, sort_by, order)
+
+                    # Add the "Add to Dashboard" button
+                    if chart and st.button("Add to Dashboard"):
+                        st.session_state["dashboard"].append(chart)
+                        st.success("Chart added to dashboard!")
+
                 else:
                     st.error("Could not generate chart parameters from your input.")
     else:
@@ -62,6 +73,8 @@ def get_chart_params_from_openai(user_input, columns_df):
     column_info = {col: "numeric" if pd.api.types.is_numeric_dtype(columns_df[col]) else "text" 
                    for col in columns_df.columns}
 
+    # Prepare the prompt to send to OpenAI
+    
     # Prepare the prompt to send to OpenAI
     prompt = f"""
     You are a data visualization assistant. The user has data with the following columns: {column_info}. 
@@ -118,6 +131,7 @@ def create_chart(chart_params, data, sort_by, order):
                           yaxis_title=y_col,
                           width=700, height=500)
         st.plotly_chart(fig, use_container_width=True)
+        return fig
 
     elif chart_type == "line":
         fig = px.line(data, x=x_col, y=y_col)
@@ -126,6 +140,7 @@ def create_chart(chart_params, data, sort_by, order):
                           yaxis_title=y_col,
                           width=700, height=500)
         st.plotly_chart(fig, use_container_width=True)
+        return fig
 
     elif chart_type == "scatter":
         fig = px.scatter(data, x=x_col, y=y_col)
@@ -134,6 +149,7 @@ def create_chart(chart_params, data, sort_by, order):
                           yaxis_title=y_col,
                           width=700, height=500)
         st.plotly_chart(fig, use_container_width=True)
+        return fig
 
     elif chart_type == "pie":
         # Create a pie chart using Plotly
@@ -141,6 +157,8 @@ def create_chart(chart_params, data, sort_by, order):
         fig.update_layout(title=f"Pie Chart: {x_col} vs {y_col}",
                           width=700, height=500)
         st.plotly_chart(fig, use_container_width=True)
+        return fig
 
     else:
         st.error(f"Unsupported chart type: {chart_type}")
+        return None
