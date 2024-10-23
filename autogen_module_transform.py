@@ -3,7 +3,7 @@ import os
 from autogen.coding import LocalCommandLineCodeExecutor
 
 # Define the function that handles the chat
-def generate_dbt_code(user_prompt, raw_prompt):
+def generate_dbt_code(raw_prompt, metadata, new_table_name):
     # Configuration for the LLM
     config_list = [{"model": "gpt-4o-mini", "api_key": os.getenv("OPENAI_API_KEY")}]
 
@@ -55,12 +55,19 @@ def generate_dbt_code(user_prompt, raw_prompt):
     print("reviewed_prompt - ", reviewed_prompt)
     if reviewed_prompt == 'NO':
         return("Error")
+    
+    full_prompt = (
+                f"I need you to write code for a dbt model based on table details and user information that you'll find below. "
+                f"We are using a Postgres database. Make sure the model is accurate and will execute with no changes necessary. "
+                f"Return only the dbt code. NOTHING ELSE. Don't say anything. DON'T RUN ANY CODE. Don't acknowledge my question, say yes or sure—just give me the code that I asked for.\n"
+                f"Table Metadata:\n{metadata}\n\nTransformation Instructions:\n{reviewed_prompt}\n\nNew Table: {new_table_name}"
+            )
         
 
     # Generate DBT code with the corrected prompt
     chat_res = user_proxy.initiate_chat(
         assistant,
-        message=reviewed_prompt,
+        message=full_prompt,
         summary_method="reflection_with_llm",
     )
 
