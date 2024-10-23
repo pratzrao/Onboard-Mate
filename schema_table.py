@@ -147,3 +147,7 @@ def schema_table_page():
 
                 st.session_state["current_page"] = "visualize"
                 st.rerun()
+
+            if st.button("Go to Dashboard"):
+                st.session_state["current_page"] = "dashboard"
+                st.rerun()
