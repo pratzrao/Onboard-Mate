@@ -2,3 +2,7 @@ venv
 .env
 .cache
 .venv
+details.env
+*.pyc
+__pycache__
+.cache
