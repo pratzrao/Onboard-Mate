@@ -26,12 +26,15 @@ jsonschema-specifications==2024.10.1
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 mdurl==0.1.2
+mypy-extensions==1.0.0
 narwhals==1.10.0
 numpy==1.26.4
 openai==1.52.1
 packaging==24.1
 pandas==2.2.3
+pathspec==0.12.1
 pillow==10.4.0
+platformdirs==4.3.6
 protobuf==5.28.3
 psycopg2-binary==2.9.10
 pyarrow==17.0.0
@@ -42,6 +45,7 @@ Pygments==2.18.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 pytz==2024.2
+PyYAML==6.0.2
 referencing==0.35.1
 regex==2024.9.11
 requests==2.32.3
