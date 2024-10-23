@@ -1,6 +1,9 @@
+import os
 import streamlit as st
 import psycopg2
 import pandas as pd
+from dotenv import load_dotenv
+
 
 # Helper function to connect to the Postgres database
 def connect_to_db(host, port, database, user, password):
@@ -12,6 +15,7 @@ def connect_to_db(host, port, database, user, password):
     except Exception as e:
         st.error(f"Error connecting to Postgres: {str(e)}")
         return None
+
 
 # Helper function to fetch schemas
 def get_schemas(conn):
@@ -26,11 +30,14 @@ def get_schemas(conn):
         st.error(f"Error fetching schemas: {str(e)}")
         return []
 
+
 # Helper function to fetch tables in a schema
 def get_tables(conn, schema):
     try:
         cur = conn.cursor()
-        cur.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema}';")
+        cur.execute(
+            f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema}';"
+        )
         tables = [table[0] for table in cur.fetchall()]
         cur.close()
         return tables
@@ -39,15 +46,18 @@ def get_tables(conn, schema):
         st.error(f"Error fetching tables: {str(e)}")
         return []
 
+
 # Helper function to fetch column details
 def get_column_info(conn, schema, table):
     try:
         cur = conn.cursor()
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT column_name, data_type 
             FROM information_schema.columns 
             WHERE table_schema = '{schema}' AND table_name = '{table}';
-        """)
+        """
+        )
         columns_info = cur.fetchall()
         cur.close()
         return columns_info
@@ -55,6 +65,7 @@ def get_column_info(conn, schema, table):
         conn.rollback()  # Rollback transaction in case of failure
         st.error(f"Error fetching column information: {str(e)}")
         return []
+
 
 # Helper function to fetch distinct values
 def get_distinct_values(conn, schema, table, column):
@@ -74,6 +85,7 @@ def get_distinct_values(conn, schema, table, column):
         st.error(f"Error fetching distinct values for column {column}: {str(e)}")
         return []
 
+
 # Page: Data Transformation
 def transform_page():
     st.title("Data Transformation Page")
@@ -82,6 +94,7 @@ def transform_page():
         st.session_state["current_page"] = "table_selection"
         st.rerun()
 
+
 # Page: Data Visualization
 def visualize_page():
     st.title("Data Visualization Page")
@@ -89,6 +102,7 @@ def visualize_page():
     if st.button("Submit"):
         st.session_state["current_page"] = "table_selection"
         st.rerun()
+
 
 # Step 2: Schema and Table Selection page
 def schema_table_page():
@@ -114,7 +128,9 @@ def schema_table_page():
             st.write(f"Selected Table: {table}")
 
             columns_info = get_column_info(conn, schema, table)
-            columns_df = pd.DataFrame(columns_info, columns=["Column Name", "Data Type"])
+            columns_df = pd.DataFrame(
+                columns_info, columns=["Column Name", "Data Type"]
+            )
             st.write("Columns Information:")
             st.dataframe(columns_df)
 
@@ -132,6 +148,7 @@ def schema_table_page():
             if st.button("Visualize Data"):
                 st.session_state["current_page"] = "visualize"
                 st.rerun()
+
 
 # Page: Connection page
 def connection_page():
@@ -152,9 +169,13 @@ def connection_page():
     # Input fields for connection
     st.session_state["host"] = st.text_input("Host", value=st.session_state["host"])
     st.session_state["port"] = st.text_input("Port", value=st.session_state["port"])
-    st.session_state["database"] = st.text_input("Database", value=st.session_state["database"])
+    st.session_state["database"] = st.text_input(
+        "Database", value=st.session_state["database"]
+    )
     st.session_state["user"] = st.text_input("Username", value=st.session_state["user"])
-    st.session_state["password"] = st.text_input("Password", type="password", value=st.session_state["password"])
+    st.session_state["password"] = st.text_input(
+        "Password", type="password", value=st.session_state["password"]
+    )
 
     if st.button("Connect"):
         conn = connect_to_db(
@@ -162,31 +183,74 @@ def connection_page():
             st.session_state["port"],
             st.session_state["database"],
             st.session_state["user"],
-            st.session_state["password"]
+            st.session_state["password"],
         )
         if conn:
             st.session_state["conn"] = conn
             st.session_state["connected"] = True
-            st.session_state["current_page"] = "table_selection"  # Set initial page after connection
+            st.session_state["current_page"] = (
+                "table_selection"  # Set initial page after connection
+            )
             st.success("Connected to Postgres database!")
             st.rerun()
 
+
 # Main function to control flow
 def main():
+    load_dotenv()
+
+    connection_details = {
+        "host": os.getenv("DBHOST"),
+        "port": os.getenv("DBPORT"),
+        "database": os.getenv("DBNAME"),
+        "user": os.getenv("DBUSER"),
+        "password": os.getenv("DBPASSWORD"),
+    }
+
     if "connected" not in st.session_state:
         st.session_state["connected"] = False
+
+    if (
+        not st.session_state["connected"] and connection_details["host"]
+    ):  # assuming if one is there the others are too
+        conn = connect_to_db(
+            connection_details["host"],
+            connection_details["port"],
+            connection_details["database"],
+            connection_details["user"],
+            connection_details["password"],
+        )
+        if conn:
+            st.session_state["conn"] = conn
+            st.session_state["connected"] = True
+            st.session_state["current_page"] = (
+                "table_selection"  # Set initial page after connection
+            )
+            st.session_state["host"] = connection_details["host"]
+            st.session_state["port"] = connection_details["port"]
+            st.session_state["database"] = connection_details["database"]
+            st.session_state["user"] = connection_details["user"]
+            st.session_state["password"] = connection_details["password"]
+
+            st.success("Connected to Postgres database!")
+            st.rerun()
+
     if "current_page" not in st.session_state:
         st.session_state["current_page"] = "connection"  # Default to connection page
 
     # Navigation between pages
     if not st.session_state["connected"]:
         connection_page()
+
     elif st.session_state["current_page"] == "table_selection":
         schema_table_page()
+
     elif st.session_state["current_page"] == "transform":
         transform_page()
+
     elif st.session_state["current_page"] == "visualize":
         visualize_page()
+
 
 if __name__ == "__main__":
     main()
