@@ -1,6 +1,7 @@
-import autogen
 import os
+import autogen
 from autogen.coding import LocalCommandLineCodeExecutor
+
 
 # Define the function that handles the chat
 def generate_dbt_code(user_prompt):
@@ -23,7 +24,9 @@ def generate_dbt_code(user_prompt):
         name="user_proxy",
         human_input_mode="NEVER",
         max_consecutive_auto_reply=10,
-        is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
+        is_termination_msg=lambda x: x.get("content", "")
+        .rstrip()
+        .endswith("TERMINATE"),
         code_execution_config={
             "executor": LocalCommandLineCodeExecutor(work_dir="coding"),
         },
@@ -37,12 +40,13 @@ def generate_dbt_code(user_prompt):
     )
 
     # Extract and return the reply, chat history, and summary
-    reply = chat_res.chat_history[-1]['content'] if chat_res.chat_history else None
+    reply = chat_res.chat_history[-1]["content"] if chat_res.chat_history else None
     return {
         "reply": reply,
         "chat_history": chat_res.chat_history,
         "summary": chat_res.summary,
     }
+
 
 # Example usage:
 # if __name__ == "__main__":

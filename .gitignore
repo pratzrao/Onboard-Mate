@@ -1,2 +1,6 @@
 venv
 .env
+details.env
+*.pyc
+__pycache__
+.cache
