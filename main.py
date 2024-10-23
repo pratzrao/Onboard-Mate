@@ -112,7 +112,7 @@ def connection_page():
             st.session_state["conn"] = conn
             st.session_state["connected"] = True
             st.success("Connected to Postgres database!")
-            st.rerun()  # Use st.experimental_rerun to re-render the app
+            st.rerun()  # Use st.rerun to re-render the app
 
 # Step 2: Schema and Table Selection page
 def schema_table_page():
