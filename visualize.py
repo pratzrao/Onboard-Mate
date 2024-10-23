@@ -43,19 +43,12 @@ def present_chat(creator):
 
     prompt = st.chat_input("What is up?")
     if prompt:
-        st.session_state.messages.append(ChatMessage('user', prompt))
         with st.chat_message("user"):
             st.markdown(prompt)
+        st.session_state.messages.append(ChatMessage('user', prompt))
 
-        messages = list(map(asdict, st.session_state.messages))
-        with st.chat_message("assistant"):
-            # stream = client.chat.completions.create(
-            #     model=st.session_state["openai_model"],
-            #     messages=messages,
-            #     stream=True,
-            # )
-            # response = st.write_stream(stream)
-            response = creator(messages[-1]['content'])
+        (*_, message) = st.session_state.messages
+        response = creator(message.content)
         st.session_state.messages.append(ChatMessage('assistant', response))
 
 def show_db_info():

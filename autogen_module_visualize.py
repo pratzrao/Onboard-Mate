@@ -1,16 +1,31 @@
 import os
-import logging
+import asyncio
 
-import autogen
+import streamlit as st
+from autogen import AssistantAgent, UserProxyAgent
 from autogen.coding import LocalCommandLineCodeExecutor
 
-def is_termination_msg(msg):
-    return 'content' in msg and msg['content'].rstrip().endswith('TERMINATE')
+class TrackableAssistantAgent(AssistantAgent):
+    def _process_received_message(self, message, sender, silent):
+        with st.chat_message(sender.name):
+            st.markdown(message)
+        return super()._process_received_message(message, sender, silent)
+
+class TrackableUserProxyAgent(UserProxyAgent):
+    def _process_received_message(self, message, sender, silent):
+        with st.chat_message(sender.name):
+            st.markdown(message)
+        return super()._process_received_message(message, sender, silent)
 
 class ChartCreator:
+    @staticmethod
+    def is_termination_msg(msg):
+        content = 'content' in msg
+        return content and msg['content'].rstrip().endswith('TERMINATE')
+
     def __init__(self):
         # Create an AssistantAgent instance
-        self.assistant = autogen.AssistantAgent(
+        self.assistant = TrackableAssistantAgent(
             name="assistant",
             llm_config={
                 "cache_seed": 41,
@@ -23,18 +38,23 @@ class ChartCreator:
         )
 
         # Create a UserProxyAgent instance
-        self.user_proxy = autogen.UserProxyAgent(
+        self.user_proxy = TrackableUserProxyAgent(
             name="user_proxy",
             human_input_mode='ALWAYS',
             max_consecutive_auto_reply=10,
-            is_termination_msg=is_termination_msg,
+            is_termination_msg=self.is_termination_msg,
             code_execution_config={
                 "executor": LocalCommandLineCodeExecutor(work_dir="coding"),
             },
         )
 
     def __call__(self, message):
-        chat_res = self.user_proxy.initiate_chat(
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(self.process(message))
+
+    async def process(self, message):
+        response = await self.user_proxy.ainitiate_chat(
             self.assistant,
             message=message,
             summary_method="reflection_with_llm",
@@ -48,15 +68,3 @@ class ChartCreator:
             reply = None
 
         return reply
-
-# Example usage:
-# if __name__ == "__main__":
-#     user_prompt = """
-#     Build xyz chart for me thanks
-#     """
-#     result = generate_dbt_code(user_prompt)
-
-#     # Print the outputs
-#     print("Reply:", result["reply"])
-#     print("Chat history:", result["chat_history"])
-#     print("Summary:", result["summary"])
