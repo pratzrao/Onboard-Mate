@@ -17,16 +17,6 @@ def generate_dbt_code(raw_prompt, metadata, new_table_name):
         },
     )
 
-    # Create a Reviewer Agent to correct prompt logic
-    reviewer = autogen.AssistantAgent(
-        name="reviewer",
-        llm_config={
-            "cache_seed": 42,  # Different seed for different behavior
-            "config_list": config_list,
-            "temperature": 0.1,  # Slightly more creative for prompt correction
-        },
-    )
-
     # Start the final DBT code generation
     user_proxy = autogen.UserProxyAgent(
         name="user_proxy",
