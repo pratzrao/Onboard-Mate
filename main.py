@@ -13,6 +13,7 @@ def main():
     if "current_page" not in st.session_state:
         st.session_state["current_page"] = "connection"  # Default to connection page
 
+
     # Navigation between pages
     if not st.session_state["connected"]:
         connection_page()

@@ -103,6 +103,12 @@ def schema_table_page():
                 st.rerun()
 
             if st.button("Visualize Data"):
+
+                st.session_state["selected_schema"] = schema  # New key
+                st.session_state["selected_table"] = table  # New key
+                st.session_state["columns_info"] = columns_info  # New key
+
+
                 st.session_state["current_page"] = "visualize"
                 st.rerun()
-
+    
