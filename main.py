@@ -59,13 +59,11 @@ def get_column_info(conn, schema, table):
 # Helper function to fetch distinct values
 def get_distinct_values(conn, schema, table, column):
     try:
-        # Ensure correct quoting of column names, especially for reserved keywords like 'end'
         if column.lower() == "end":
             column = '"end"'
         else:
-            column = f'"{column}"'  # Ensure column is always quoted
+            column = f'"{column}"'
 
-        # Ensure the table and schema names are quoted to prevent casing issues
         cur = conn.cursor()
         cur.execute(f'SELECT DISTINCT {column} FROM "{schema}"."{table}" LIMIT 5;')
         distinct_values = cur.fetchall()
@@ -76,12 +74,70 @@ def get_distinct_values(conn, schema, table, column):
         st.error(f"Error fetching distinct values for column {column}: {str(e)}")
         return []
 
-# Step 1: Connection page
+# Page: Data Transformation
+def transform_page():
+    st.title("Data Transformation Page")
+    st.header("This is where you'll transform your data.")
+    if st.button("Submit"):
+        st.session_state["current_page"] = "table_selection"
+        st.rerun()
+
+# Page: Data Visualization
+def visualize_page():
+    st.title("Data Visualization Page")
+    st.header("This is where you'll visualize your data.")
+    if st.button("Submit"):
+        st.session_state["current_page"] = "table_selection"
+        st.rerun()
+
+# Step 2: Schema and Table Selection page
+def schema_table_page():
+    conn = st.session_state["conn"]
+
+    st.sidebar.title("Connection Details")
+    st.sidebar.write(f"Connected to: {st.session_state['database']}")
+
+    st.title("Postgres Data Warehouse Explorer")
+    st.header("Step 2: Explore the Database")
+
+    # Select schema
+    schemas = get_schemas(conn)
+    schema = st.selectbox("Select Schema", schemas, key="schema")
+
+    # Select table
+    if schema:
+        tables = get_tables(conn, schema)
+        table = st.selectbox("Select Table", tables, key="table")
+
+        # If table is selected, fetch column details and distinct values
+        if table:
+            st.write(f"Selected Table: {table}")
+
+            columns_info = get_column_info(conn, schema, table)
+            columns_df = pd.DataFrame(columns_info, columns=["Column Name", "Data Type"])
+            st.write("Columns Information:")
+            st.dataframe(columns_df)
+
+            st.write("Distinct values in each column:")
+            for column in columns_df["Column Name"]:
+                distinct_values = get_distinct_values(conn, schema, table, column)
+                st.write(f"Column: {column}")
+                st.write(distinct_values)
+
+            # Navigation options after table selection
+            if st.button("Transform Data"):
+                st.session_state["current_page"] = "transform"
+                st.rerun()
+
+            if st.button("Visualize Data"):
+                st.session_state["current_page"] = "visualize"
+                st.rerun()
+
+# Page: Connection page
 def connection_page():
     st.title("Postgres Data Warehouse Explorer")
     st.header("Step 1: Connect to the Database")
 
-    # Initialize session state for connection details before rendering widgets
     if "host" not in st.session_state:
         st.session_state["host"] = ""
     if "port" not in st.session_state:
@@ -111,58 +167,26 @@ def connection_page():
         if conn:
             st.session_state["conn"] = conn
             st.session_state["connected"] = True
+            st.session_state["current_page"] = "table_selection"  # Set initial page after connection
             st.success("Connected to Postgres database!")
-            st.rerun()  # Use st.rerun to re-render the app
-
-# Step 2: Schema and Table Selection page
-def schema_table_page():
-    conn = st.session_state["conn"]
-
-    # Sidebar with connection info
-    st.sidebar.title("Connection Details")
-    st.sidebar.write(f"Connected to: {st.session_state['database']}")
-
-    st.title("Postgres Data Warehouse Explorer")
-    st.header("Step 2: Explore the Database")
-
-    # Select schema
-    schemas = get_schemas(conn)
-    schema = st.selectbox("Select Schema", schemas, key="schema")
-
-    # Select table
-    if schema:
-        tables = get_tables(conn, schema)
-        table = st.selectbox("Select Table", tables, key="table")
-
-        # If table is selected, fetch column details and distinct values
-        if table:
-            st.write(f"Selected Table: {table}")
-
-            # Fetch column information
-            columns_info = get_column_info(conn, schema, table)
-            columns_df = pd.DataFrame(columns_info, columns=["Column Name", "Data Type"])
-            st.write("Columns Information:")
-            st.dataframe(columns_df)
-
-            # Fetch distinct values for each column
-            st.write("Distinct values in each column:")
-            for column in columns_df["Column Name"]:
-                distinct_values = get_distinct_values(conn, schema, table, column)
-                st.write(f"Column: {column}")
-                st.write(distinct_values)
+            st.rerun()
 
 # Main function to control flow
 def main():
-    # Initialize session state for connection status
     if "connected" not in st.session_state:
         st.session_state["connected"] = False
+    if "current_page" not in st.session_state:
+        st.session_state["current_page"] = "connection"  # Default to connection page
 
-    # If not connected, show connection page
+    # Navigation between pages
     if not st.session_state["connected"]:
         connection_page()
-    else:
-        # If connected, show schema and table selection page
+    elif st.session_state["current_page"] == "table_selection":
         schema_table_page()
+    elif st.session_state["current_page"] == "transform":
+        transform_page()
+    elif st.session_state["current_page"] == "visualize":
+        visualize_page()
 
 if __name__ == "__main__":
     main()
