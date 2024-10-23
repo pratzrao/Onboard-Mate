@@ -1,19 +1,26 @@
 import streamlit as st
 import pandas as pd
 
+from schema_table import get_data
+
+
 # Page: Data Visualization
 def visualize_page():
 
     schema = st.session_state.get("selected_schema")
     table = st.session_state.get("selected_table")
-    columns_info = st.session_state.get("columns_info")
 
-
-    if schema and table and columns_info:
+    if schema and table:
         st.header(f"Visualizing Data from {schema}.{table}")
-        columns_df = pd.DataFrame(columns_info, columns=["Column Name", "Data Type"])
-        st.write("Columns Information:")
-        st.dataframe(columns_df)
+        data = get_data(st.session_state["conn"], schema, table)
+        if not data:
+            st.error("no data in table")
+        else:
+            columns_df = pd.DataFrame(data)
+            st.write("Columns Information:")
+
+            if len(columns_df.columns) == 2:
+                st.bar_chart(columns_df.set_index(columns_df.columns[0]), height=900)
     else:
         st.error("No schema, table, or columns information available!")
 
