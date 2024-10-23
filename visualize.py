@@ -1,9 +1,9 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, asdict
 
 import pandas as pd
 import streamlit as st
 
-from autogen_module_visualize import generate_charts
+from autogen_module_visualize import ChartCreator
 
 @dataclass
 class DatabaseState:
@@ -17,7 +17,10 @@ class DatabaseState:
     def to_frame(self):
         return pd.DataFrame(
             self.columns_info,
-            columns=['Column name', 'Data Type'],
+            columns=[
+                'Column name',
+                'Data Type',
+            ],
         )
 
     @classmethod
@@ -25,20 +28,51 @@ class DatabaseState:
         kwargs = { x.name: state.get(x.name) for x in fields(cls) }
         return cls(**kwargs)
 
-# Page: Data Visualization
-def visualize_page():
-    db = DatabaseState.from_state(st.session_state
+@dataclass
+class ChatMessage:
+    role: str
+    content: str
+
+def present_chat(creator):
+    if 'messages' not in st.session_state:
+        st.session_state.messages = []
+
+    for m in st.session_state.messages:
+        with st.chat_message(m.role):
+            st.markdown(m.content)
+
+    prompt = st.chat_input("What is up?")
+    if prompt:
+        st.session_state.messages.append(ChatMessage('user', prompt))
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        messages = list(map(asdict, st.session_state.messages))
+        with st.chat_message("assistant"):
+            # stream = client.chat.completions.create(
+            #     model=st.session_state["openai_model"],
+            #     messages=messages,
+            #     stream=True,
+            # )
+            # response = st.write_stream(stream)
+            response = creator(messages[-1]['content'])
+        st.session_state.messages.append(ChatMessage('assistant', response))
+
+def show_db_info():
+    db = DatabaseState.from_state(st.session_state)
     if not db:
         st.error('Schema, data, and column information required')
         st.exception(ValueError())
 
-    st.header(f'Visualizing Data from {db}')
+    st.sidebar.header(f'Visualizing Data from {db}')
 
     columns_df = db.to_frame()
-    st.write("Columns Information:")
-    st.dataframe(columns_df)
+    st.sidebar.write('Columns Information:')
+    st.sidebar.dataframe(columns_df)
 
-    message = st.text_area('What would you like to see from your data?')
-    if st.button("Submit"):
-        response = generate_charts(message)
-        st.write(f'{message}\n{response}')
+# Page: Data Visualization
+def visualize_page():
+    creator = ChartCreator()
+
+    show_db_info()
+    present_chat(creator)
