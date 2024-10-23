@@ -1,18 +1,22 @@
-import streamlit as st
-import psycopg2
 import os
 from dotenv import load_dotenv
+import streamlit as st
+import psycopg2
+
 
 # Helper function to connect to the Postgres database
-def connect_to_db(host, port, database, user, password):
+def connect_to_db(
+    host, port, database, user, password
+) -> psycopg2.extensions.connection:
     try:
-        conn = psycopg2.connect(
+        conn: psycopg2.extensions.connection = psycopg2.connect(
             host=host, port=port, dbname=database, user=user, password=password
         )
         return conn
     except Exception as e:
         st.error(f"Error connecting to Postgres: {str(e)}")
         return None
+
 
 def connection_page():
     # Load environment variables from .env file (if available)
@@ -43,9 +47,13 @@ def connection_page():
     # Input fields for connection (pre-filled with session state values or environment variables)
     st.session_state["host"] = st.text_input("Host", value=st.session_state["host"])
     st.session_state["port"] = st.text_input("Port", value=st.session_state["port"])
-    st.session_state["database"] = st.text_input("Database", value=st.session_state["database"])
+    st.session_state["database"] = st.text_input(
+        "Database", value=st.session_state["database"]
+    )
     st.session_state["user"] = st.text_input("Username", value=st.session_state["user"])
-    st.session_state["password"] = st.text_input("Password", type="password", value=st.session_state["password"])
+    st.session_state["password"] = st.text_input(
+        "Password", type="password", value=st.session_state["password"]
+    )
 
     if st.button("Connect"):
         conn = connect_to_db(
@@ -53,11 +61,13 @@ def connection_page():
             st.session_state["port"],
             st.session_state["database"],
             st.session_state["user"],
-            st.session_state["password"]
+            st.session_state["password"],
         )
         if conn:
             st.session_state["conn"] = conn
             st.session_state["connected"] = True
-            st.session_state["current_page"] = "table_selection"  # Set initial page after connection
+            st.session_state["current_page"] = (
+                "table_selection"  # Set initial page after connection
+            )
             st.success("Connected to Postgres database!")
             st.rerun()

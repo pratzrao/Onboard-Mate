@@ -1,5 +1,5 @@
 import streamlit as st
-import pandas as pd
+
 from transform import transform_page
 from connection import connection_page
 from schema_table import schema_table_page
@@ -22,6 +22,7 @@ def main():
         transform_page()
     elif st.session_state["current_page"] == "visualize":
         visualize_page()
+
 
 if __name__ == "__main__":
     main()

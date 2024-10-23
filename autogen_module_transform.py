@@ -1,6 +1,7 @@
-import autogen
 import os
+import autogen
 from autogen.coding import LocalCommandLineCodeExecutor
+
 
 # Define the function that handles the chat
 def generate_dbt_code(user_prompt):
@@ -42,7 +43,9 @@ def generate_dbt_code(user_prompt):
         name="user_proxy",
         human_input_mode="NEVER",
         max_consecutive_auto_reply=10,
-        is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
+        is_termination_msg=lambda x: x.get("content", "")
+        .rstrip()
+        .endswith("TERMINATE"),
         code_execution_config={
             "executor": LocalCommandLineCodeExecutor(work_dir="coding"),
         },
@@ -65,11 +68,24 @@ def generate_dbt_code(user_prompt):
                 print(message['content'])
                 result = message['content']
                 break
-        # for message in messages:
-        #     for k, v in message.items():
-        #         print("%20s %50s" % (k, v))
+
 
     # Extract the DBT code from the reply, ignoring any termination messages
     return {
         "result": result            
         }
+
+
+
+# Example usage:
+# if __name__ == "__main__":
+#     user_prompt = """
+#     I have a table with columns - name, age, date, gender, id, timestamp.
+#     Write dbt code for me. I need to drop the column timestamp, and drop all rows with null values in date.
+#     """
+#     result = generate_dbt_code(user_prompt)
+
+#     # Print the outputs
+#     print("Reply:", result["reply"])
+#     print("Chat history:", result["chat_history"])
+#     print("Summary:", result["summary"])
