@@ -3,7 +3,7 @@ import os
 from autogen.coding import LocalCommandLineCodeExecutor
 
 # Define the function that handles the chat
-def generate_dbt_code(user_prompt):
+def generate_dbt_code(user_prompt, raw_prompt):
     # Configuration for the LLM
     config_list = [{"model": "gpt-4o-mini", "api_key": os.getenv("OPENAI_API_KEY")}]
 
@@ -27,16 +27,6 @@ def generate_dbt_code(user_prompt):
         },
     )
 
-    # Review the user prompt with the Reviewer agent
-    review_res = reviewer.initiate_chat(
-        assistant,
-        message=f"Review the following transformation request for any logical issues and correct it if needed:\n{user_prompt}",
-        summary_method="reflection_with_llm",
-        silent=True
-    )
-
-    reviewed_prompt = review_res.chat_history[-1]['content']
-
     # Start the final DBT code generation
     user_proxy = autogen.UserProxyAgent(
         name="user_proxy",
@@ -48,13 +38,30 @@ def generate_dbt_code(user_prompt):
         },
     )
 
+    # Review the user prompt with the Reviewer agent
+    review_res = user_proxy.initiate_chat(
+        assistant,
+        message=f"Review the following transformation request for a table. If the request does not contain a proper database transformation request, reply with NO. If it is perfectly correct or it makes logical sense but there are a few mistakes like typos or improperly explained concepts - clarify the transformation prompt and explain it better and return the corrected prompt ONLY WITH NO OTHER EXPLANATIONS OR ACKNOWLEDGEMENTS. Return NO ONLY if the prompt is rubbish. If it can be fixed, return the fixed prompt. The prompt is:\n{raw_prompt}.",
+        summary_method="reflection_with_llm"
+    )
+
+    all_messages = list(assistant.chat_messages.values())
+    flat_messages = [msg for sublist in all_messages for msg in sublist]
+
+    # Iterate through flat_messages to find what the 'assistant' said
+    assistant_messages = [msg['content'] for msg in flat_messages if msg['role'] == 'assistant']
+    reviewed_prompt = assistant_messages[-2]
+
+    print("reviewed_prompt - ", reviewed_prompt)
+    if reviewed_prompt == 'NO':
+        return("Error")
+        
 
     # Generate DBT code with the corrected prompt
     chat_res = user_proxy.initiate_chat(
         assistant,
         message=reviewed_prompt,
         summary_method="reflection_with_llm",
-        silent=True
     )
 
     result = None
@@ -62,7 +69,6 @@ def generate_dbt_code(user_prompt):
         # look only at the last message with any content
         for message in reversed(messages):
             if message.get("content") and message['content'].find("```sql") == 0:
-                print(message['content'])
                 result = message['content']
                 break
         # for message in messages:
@@ -73,3 +79,4 @@ def generate_dbt_code(user_prompt):
     return {
         "result": result            
         }
+

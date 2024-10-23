@@ -58,8 +58,10 @@ def transform_page():
             )
 
             # Call autogen to generate DBT code
-            result = generate_dbt_code(full_prompt)
-            if result:
+            result = generate_dbt_code(full_prompt, user_prompt)
+            if result == "Error":
+                st.error("Your request does not seem like a legitimate transformation request. Please rephrase and try again.")
+            elif result:
                 # Create dbt directory if it doesn't exist
                 os.makedirs("dbt", exist_ok=True)
 
