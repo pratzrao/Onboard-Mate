@@ -52,7 +52,7 @@ def generate_dbt_code(raw_prompt, metadata, new_table_name):
     full_prompt = (
                 f"I need you to write code for a dbt model based on table details and user information that you'll find below. "
                 f"We are using a Postgres database. Make sure the model is accurate and will execute with no changes necessary. "
-                f"Return only the dbt code. NOTHING ELSE. Don't say anything. DON'T RUN ANY CODE. Don't acknowledge my question, say yes or sure—just give me the code that I asked for.\n"
+                f"Return only the dbt code. NOTHING ELSE. Don't say anything. Do not use ref to reference the table you are selecting from - the name of the db is hackathon_pratiksha. An example of how the source table should be referred is -  {{ source('hackathon_pratiksha', 'tablename_here') }}. You can just put a from before that and write the rest of the sql normally. You will be reading the table from a source.yml file. DON'T RUN ANY CODE. Don't acknowledge my question, say yes or sure—just give me the code that I asked for.\n"
                 f"Table Metadata:\n{metadata}\n\nTransformation Instructions:\n{reviewed_prompt}\n\nNew Table: {new_table_name}"
             )
         

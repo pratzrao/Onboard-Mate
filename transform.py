@@ -1,6 +1,7 @@
 import streamlit as st
 from autogen_module_transform import generate_dbt_code
 import os
+from modelgeneration import run_dbt_project, create_new_model, create_or_append_source_yml
 
 def clean_sql_file_inplace(file_path: str):
     # Read the contents of the SQL file
@@ -11,7 +12,7 @@ def clean_sql_file_inplace(file_path: str):
     cleaned_sql_content = []
     for line in sql_content:
         # Skip lines that are commented or contain 'TERMINATE'
-        if not line.strip().startswith('--') and 'TERMINATE' not in line and not line.strip().startswith('```'):
+        if not line.strip().startswith('--') and not line.strip().startswith('#') and 'TERMINATE' not in line and not line.strip().startswith('```'):
             cleaned_sql_content.append(line)
 
     # Join the cleaned SQL content
@@ -65,8 +66,15 @@ def transform_page():
                 with open(dbt_file_path, "w") as f:
                     f.write(str(result["result"]))
 
-                st.success(f"DBT code generated and saved to {dbt_file_path}")
+                st.success(f"DBT code generated!")
                 clean_sql_file_inplace(f"dbt/{new_table_name}.sql")
+                create_or_append_source_yml(schema, table)
+
+                create_new_model(new_table_name, str(result["result"]))
+                clean_sql_file_inplace(f"dbt_project/models/{new_table_name}.sql")
+
+                # Run the dbt project
+                run_dbt_project()
 
                 
             else:
