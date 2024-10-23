@@ -1,19 +1,22 @@
-import autogen
 import os
+
+import autogen
 from autogen.coding import LocalCommandLineCodeExecutor
+
+def is_termination_msg(msg):
+    return 'content' in msg and msg['content'].rstrip().endswith('TERMINATE')
 
 # Define the function that handles the chat
 def generate_charts(user_prompt):
-    # Configuration for the LLM
-    # You need to set the API Key in your environment by running in terminal - "export OPENAI_API_KEY=/"Your API Key/" "
-    config_list = [{"model": "gpt-4o-mini", "api_key": os.getenv("OPENAI_API_KEY")}]
-
     # Create an AssistantAgent instance
     assistant = autogen.AssistantAgent(
         name="assistant",
         llm_config={
             "cache_seed": 41,
-            "config_list": config_list,
+            "config_list": [{
+                "model": "gpt-4o-mini",
+                "api_key": os.getenv("OPENAI_API_KEY"),
+            }],
             "temperature": 0,
         },
     )
@@ -23,7 +26,7 @@ def generate_charts(user_prompt):
         name="user_proxy",
         human_input_mode="NEVER",
         max_consecutive_auto_reply=10,
-        is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE"),
+        is_termination_msg=is_termination_msg,
         code_execution_config={
             "executor": LocalCommandLineCodeExecutor(work_dir="coding"),
         },
@@ -37,7 +40,12 @@ def generate_charts(user_prompt):
     )
 
     # Extract and return the reply, chat history, and summary
-    reply = chat_res.chat_history[-1]['content'] if chat_res.chat_history else None
+    if chat_res.chat_history:
+        (*_, last) = chat_res.chat_history
+        reply = last['content']
+    else:
+        reply = None
+
     return {
         "reply": reply,
         "chat_history": chat_res.chat_history,
