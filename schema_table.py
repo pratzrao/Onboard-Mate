@@ -54,17 +54,22 @@ def get_column_info(conn: psycopg2.extensions.connection, schema: str, table: st
 
 
 def get_data(conn: psycopg2.extensions.connection, schema: str, table: str):
-    """select all data from a table"""
+    """Select all data from a table and fetch column names."""
     try:
         cur = conn.cursor()
+        # Execute the query to get data
         cur.execute(f"SELECT * FROM {schema}.{table};")
         data = cur.fetchall()
+
+        # Get column names
+        col_names = [desc[0] for desc in cur.description]  # Fetch the column names from the description
+
         cur.close()
-        return data
+        return data, col_names  # Return both data and column names
     except Exception as e:
         conn.rollback()  # Rollback transaction in case of failure
         st.error(f"Error fetching data: {str(e)}")
-        return []
+        return [], []  # Return empty data and column names in case of error
 
 
 # Helper function to fetch distinct values
@@ -118,11 +123,11 @@ def schema_table_page():
             st.write("Columns Information:")
             st.dataframe(columns_df)
 
-            st.write("Distinct values in each column:")
-            for column in columns_df["Column Name"]:
-                distinct_values = get_distinct_values(conn, schema, table, column)
-                st.write(f"Column: {column}")
-                st.write(distinct_values)
+            # st.write("Distinct values in each column:")
+            # for column in columns_df["Column Name"]:
+            #     distinct_values = get_distinct_values(conn, schema, table, column)
+            #     st.write(f"Column: {column}")
+            #     st.write(distinct_values)
 
             # Navigation options after table selection
             if st.button("Transform Data"):
