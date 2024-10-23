@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 import psycopg2
+from modelgeneration import scaffold_empty_project, generate_profiles_yml, clear_dbt_folder
 
 
 # Helper function to connect to the Postgres database
@@ -64,10 +65,18 @@ def connection_page():
             st.session_state["password"],
         )
         if conn:
+
+            clear_dbt_folder()
+            # Scaffold the empty project
+            scaffold_empty_project()
+
+            # Generate profiles.yml
+            generate_profiles_yml()
+
             st.session_state["conn"] = conn
             st.session_state["connected"] = True
             st.session_state["current_page"] = (
                 "table_selection"  # Set initial page after connection
             )
-            st.success("Connected to Postgres database!")
+            st.success("Connected to Postgres database and Initialized DBT Project!")
             st.rerun()
