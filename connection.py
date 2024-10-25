@@ -1,8 +1,13 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 import streamlit as st
 import psycopg2
-from modelgeneration import scaffold_empty_project, generate_profiles_yml, clear_dbt_folder
+from modelgeneration import (
+    scaffold_empty_project,
+    generate_profiles_yml,
+    clear_dbt_folder,
+)
 
 
 # Helper function to connect to the Postgres database
@@ -66,12 +71,21 @@ def connection_page():
         )
         if conn:
 
-            clear_dbt_folder()
-            # Scaffold the empty project
-            scaffold_empty_project()
+            project_dir = Path(os.getenv("DBT_PROJECT_DIR"))
+            dbt_venv = Path(os.getenv("DBT_VENV_DIR"))
+            connection_info = {
+                "host": os.getenv("DBHOST"),
+                "port": os.getenv("DBPORT"),
+                "database": os.getenv("DBNAME"),
+                "user": os.getenv("DBUSER"),
+                "password": os.getenv("DBPASSWORD"),
+            }
 
-            # Generate profiles.yml
-            generate_profiles_yml()
+            # clear_dbt_folder(project_dir)
+
+            scaffold_empty_project(project_dir, dbt_venv)
+
+            generate_profiles_yml(project_dir, connection_info)
 
             st.session_state["conn"] = conn
             st.session_state["connected"] = True
